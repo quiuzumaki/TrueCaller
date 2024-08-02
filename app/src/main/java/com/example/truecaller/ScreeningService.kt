@@ -5,6 +5,7 @@ import android.os.Build
 import android.telecom.Call
 import android.telecom.CallScreeningService
 import android.telecom.Connection
+import android.util.Log
 import androidx.annotation.RequiresApi
 
 class ScreeningService: CallScreeningService() {
@@ -46,6 +47,11 @@ class ScreeningService: CallScreeningService() {
 
         // Call this function to provide your screening response.
         respondToCall(callDetails, response)
+    }
+
+    fun isBlockedCalls(phone: String) : Boolean {
+        Log.d("ScreeningService", phone)
+        return false
     }
 
 }
