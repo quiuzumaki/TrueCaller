@@ -1,4 +1,4 @@
-package com.example.truecaller
+package com.example.truecaller.redirectapp
 
 import android.net.Uri
 import android.os.Build
@@ -8,6 +8,7 @@ import androidx.annotation.RequiresApi
 
 @RequiresApi(Build.VERSION_CODES.Q)
 class RedirectionService: CallRedirectionService() {
+    private val TAG: String = RedirectionService::class.java.toString()
     @RequiresApi(Build.VERSION_CODES.Q)
     override fun onPlaceCall(
         handle: Uri,

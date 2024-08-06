@@ -8,7 +8,10 @@
 
     <uses-permission android:name="android.permission.MANAGE_OWN_CALLS" />
     <uses-permission android:name="android.permission.CALL_PHONE" />
-
+    <uses-permission android:name="android.permission.READ_PHONE_STATE"/>
+    <uses-permission android:name="android.permission.READ_PHONE_NUMBERS"/>
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"
+        tools:ignore="CoarseFineLocation" />
     <application
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
@@ -26,51 +29,72 @@
             android:theme="@style/Theme.TrueCaller">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
 
-        <activity
-            android:name=".DialerActivity"
-            android:label="@string/title_activity_dialer"
-            android:exported="false">
-            <intent-filter>
-                <action android:name="android.intent.action.DIAL" />
-                <category android:name="android.intent.category.DEFAULT" />
-            </intent-filter>
-            <intent-filter>
-                <action android:name="android.intent.action.DIAL" />
-                <category android:name="android.intent.category.DEFAULT" />
-                <data android:scheme="tel" />
-            </intent-filter>
-        </activity>
+<!--        <activity-->
+<!--            android:name=".defaultapp.DialerActivity"-->
+<!--            android:label="@string/title_activity_dialer"-->
+<!--            android:exported="false">-->
+<!--            <intent-filter>-->
+<!--                <action android:name="android.intent.action.DIAL" />-->
+<!--                <category android:name="android.intent.category.DEFAULT" />-->
+<!--            </intent-filter>-->
+<!--            <intent-filter>-->
+<!--                <action android:name="android.intent.action.DIAL" />-->
+<!--                <category android:name="android.intent.category.DEFAULT" />-->
+<!--                <data android:scheme="tel" />-->
+<!--            </intent-filter>-->
+<!--        </activity>-->
 
-        <service
-            android:name=".CallerConnectionService"
-            android:exported="true"
-            android:permission="android.permission.BIND_TELECOM_CONNECTION_SERVICE">
-            <intent-filter>
-                <action android:name="android.telecom.ConnectionService" />
-            </intent-filter>
-        </service>
-        <service
-            android:name=".ScreeningService"
-            android:exported="false"
-            android:permission="android.permission.BIND_SCREENING_SERVICE">
-            <intent-filter>
-                <action android:name="android.telecom.CallScreeningService" />
-            </intent-filter>
-        </service>
+<!--        <service android:name=".defaultapp.CallerInCallService"-->
+<!--            android:permission="android.permission.BIND_INCALL_SERVICE"-->
+<!--            android:exported="true">-->
+<!--            <meta-data android:name="android.telecom.IN_CALL_SERVICE_UI" android:value="true" />-->
+<!--            <meta-data android:name="android.telecom.IN_CALL_SERVICE_RINGING"-->
+<!--                android:value="true" />-->
+<!--            <intent-filter>-->
+<!--                <action android:name="android.telecom.InCallService"/>-->
+<!--            </intent-filter>-->
+<!--        </service>-->
 
-        <service
-            android:name=".RedirectionService"
-            android:permission="android.permission.BIND_CALL_REDIRECTION_SERVICE"
-            android:exported="false">
+<!--        <service-->
+<!--            android:name=".defaultapp.CallerConnectionService"-->
+<!--            android:exported="true"-->
+<!--            android:permission="android.permission.BIND_TELECOM_CONNECTION_SERVICE">-->
+<!--            <intent-filter>-->
+<!--                <action android:name="android.telecom.ConnectionService" />-->
+<!--            </intent-filter>-->
+<!--        </service>-->
+
+<!--        <service-->
+<!--            android:name=".screencallapp.ScreeningService"-->
+<!--            android:exported="false"-->
+<!--            android:permission="android.permission.BIND_SCREENING_SERVICE">-->
+<!--            <intent-filter>-->
+<!--                <action android:name="android.telecom.CallScreeningService" />-->
+<!--            </intent-filter>-->
+<!--        </service>-->
+
+<!--        <service-->
+<!--            android:name=".redirectapp.RedirectionService"-->
+<!--            android:permission="android.permission.BIND_CALL_REDIRECTION_SERVICE"-->
+<!--            android:exported="false">-->
+<!--            <intent-filter>-->
+<!--                <action android:name="android.telecom.CallRedirectionService"/>-->
+<!--            </intent-filter>-->
+<!--        </service>-->
+
+        <receiver
+            android:name=".CallerConnectionReceiver"
+            android:enabled="true"
+            android:exported="true">
             <intent-filter>
-                <action android:name="android.telecom.CallRedirectionService"/>
+                <action android:name="android.intent.action.PHONE_STATE" />
             </intent-filter>
-        </service>
+        </receiver>
+
     </application>
 
 </manifest>
