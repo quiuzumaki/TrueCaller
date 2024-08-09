@@ -1,4 +1,4 @@
-package com.example.truecaller.defaultapp
+package com.example.truecaller.screencallapp
 
 import android.Manifest
 import android.app.Activity
@@ -19,17 +19,37 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.RequiresApi
 import androidx.core.app.ActivityCompat
 
-
 class DialerActivity: ComponentActivity() {
     private val PHONE = "091211212"
-    private lateinit var intentLauncher: ActivityResultLauncher<Intent>
+    private val ROLE_CALL_SCREENING_PERMISSION = RoleManager.ROLE_CALL_SCREENING
+    private val ROLE_DIALER_PERMISSION = RoleManager.ROLE_DIALER
+    private val intentLauncher: ActivityResultLauncher<Intent> = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
+        if (it.resultCode == Activity.RESULT_OK) {
+            showToast("Success requesting ROLE_BROWSER!")
+        } else {
+            showToast("Failed requesting ROLE_BROWSER")
+        }
+    }
+    private lateinit var roleManager: RoleManager
     @RequiresApi(Build.VERSION_CODES.Q)
-    fun requestRole() {
-        val roleManager = getSystemService(Context.ROLE_SERVICE) as RoleManager
-        if (roleManager.isRoleAvailable(RoleManager.ROLE_DIALER)) {
-            if (!roleManager.isRoleHeld(RoleManager.ROLE_DIALER)) {
+    fun requestRoleCallScreening() {
+        if (roleManager.isRoleAvailable(ROLE_CALL_SCREENING_PERMISSION) &&
+            !roleManager.isRoleHeld(ROLE_CALL_SCREENING_PERMISSION)
+        ) {
+            intentLauncher.launch(
+                roleManager.createRequestRoleIntent(ROLE_CALL_SCREENING_PERMISSION)
+            )
+        } else {
+            showToast("App is already by this app")
+        }
+    }
+
+    @RequiresApi(Build.VERSION_CODES.Q)
+    fun requestRoleDialer() {
+        if (roleManager.isRoleAvailable(ROLE_DIALER_PERMISSION)) {
+            if (!roleManager.isRoleHeld(ROLE_DIALER_PERMISSION)) {
                 intentLauncher.launch(
-                    roleManager.createRequestRoleIntent(RoleManager.ROLE_DIALER)
+                    roleManager.createRequestRoleIntent(ROLE_DIALER_PERMISSION)
                 )
             } else {
                 showToast("App is already held by this app")
@@ -42,20 +62,14 @@ class DialerActivity: ComponentActivity() {
     @RequiresApi(Build.VERSION_CODES.Q)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        roleManager = getSystemService(Context.ROLE_SERVICE) as RoleManager
+        requestRoleCallScreening()
         setContent {
             DialerScreen (
                 {
-                    requestRole()
                     placeCall()
                 }
             )
-        }
-        intentLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
-            if (it.resultCode == Activity.RESULT_OK) {
-                showToast("Success requesting ROLE_BROWSER!")
-            } else {
-                showToast("Failed requesting ROLE_BROWSER")
-            }
         }
     }
 

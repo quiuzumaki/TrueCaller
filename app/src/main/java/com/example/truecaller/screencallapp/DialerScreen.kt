@@ -1,4 +1,4 @@
-package com.example.truecaller.defaultapp
+package com.example.truecaller.screencallapp
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
