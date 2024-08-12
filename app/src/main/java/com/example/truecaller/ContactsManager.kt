@@ -1,7 +1,9 @@
 package com.example.truecaller
 
 import android.Manifest
+import android.annotation.SuppressLint
 import android.app.Activity
+import android.content.Context
 import android.content.pm.PackageManager
 import android.database.Cursor
 import android.net.Uri
@@ -12,32 +14,31 @@ import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import android.provider.ContactsContract.CommonDataKinds.*
 
-class ContactsManager: Activity() {
+class ContactsManager private constructor(val context: Context) {
 
-    private val READ_CONTACTS_PERMISSION: String = Manifest.permission.READ_CONTACTS
     private val CONTENT_URI: Uri = ContactsContract.CommonDataKinds.Phone.CONTENT_URI
 
     private val TAG = ContactsManager::class.java.simpleName
-
+//    init {
+//
+//    }
     companion object {
-        val PHONE_NUMBER_ID: String = "phone_number"
+        @Volatile private var INSTANCE: ContactsManager? = null
+        val READ_CONTACTS_PERMISSION: String = Manifest.permission.READ_CONTACTS
+        fun getInstance(ctx: Context): ContactsManager {
+            return INSTANCE ?: ContactsManager(ctx)
+        }
     }
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        val phoneNumber = getIntent().getStringExtra(PHONE_NUMBER_ID)
-        Log.d(TAG, phoneNumber!!)
-        Log.d(TAG, phoneLookup(phoneNumber)!!.toString())
-    }
 
+    @SuppressLint("Range")
     fun phoneLookup(phoneNumber: String): Contact? {
-        requestPermission()
         val phoneProjection = arrayOf(
             Phone.DISPLAY_NAME,
             Phone.NUMBER,
             Phone._ID
         )
-        val phoneCursor = contentResolver?.query(
+        val phoneCursor = context.contentResolver.query(
             CONTENT_URI,
             phoneProjection,
             "${Phone.NUMBER} = ?",
@@ -46,16 +47,43 @@ class ContactsManager: Activity() {
         )!!
         var phoneNumbers: ArrayList<String>? = null
         if (phoneCursor.moveToFirst()) {
-            val idIndex = phoneCursor.getColumnIndex(Phone._ID)
-            val nameIndex = phoneCursor.getColumnIndex(Phone.DISPLAY_NAME)
+//            val idIndex = phoneCursor.getColumnIndex(Phone._ID)
+//            val nameIndex = phoneCursor.getColumnIndex(Phone.DISPLAY_NAME)
 
-            val contactId = phoneCursor.getString(idIndex)
-            val contactName = phoneCursor.getString(nameIndex)
+            val contactId = phoneCursor.getString(phoneCursor.getColumnIndex(Phone._ID))
+            val contactName = phoneCursor.getString(phoneCursor.getColumnIndex(Phone.DISPLAY_NAME))
 
-            phoneNumbers = getPhoneNumbersForContact(contactId)
+//            phoneNumbers = getPhoneNumbersForContact(contactId)
         }
         phoneCursor.close()
-        return Contact("quido", phoneNumbers)
+        return Contact("quido", phoneNumber)
+    }
+
+    fun search(phoneNumber: String): Contact {
+        val projection = arrayOf(
+            Phone.DISPLAY_NAME,
+            Phone.NUMBER
+        )
+        val selection = "${Phone.NUMBER} LIKE ?"
+        val selectionArgs = arrayOf("%$phoneNumber%")
+
+        val cursor: Cursor? = context.contentResolver.query(
+            CONTENT_URI,
+            projection,
+            selection,
+            selectionArgs,
+            null
+        )
+
+        var contactName: String? = null
+
+        cursor?.use {
+            if (it.moveToFirst()) {
+                val nameIndex = it.getColumnIndex(ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME)
+                contactName = it.getString(nameIndex)
+            }
+        }
+        return Contact(contactName!!, phoneNumber)
     }
 
     private fun getPhoneNumbersForContact(contactId: String?): ArrayList<String> {
@@ -63,7 +91,7 @@ class ContactsManager: Activity() {
         val projection = arrayOf(Phone.NUMBER)
         val selection = "${Phone.CONTACT_ID} = ?"
 
-        val phone = contentResolver?.query(CONTENT_URI, projection, selection, arrayOf(contactId), null)!!
+        val phone = context.contentResolver.query(CONTENT_URI, projection, selection, arrayOf(contactId), null)!!
 
         if (phone.moveToFirst()) {
             val phoneNumberIndex = phone.getColumnIndex(Phone.NUMBER)
@@ -78,21 +106,11 @@ class ContactsManager: Activity() {
         return phoneNumbers
     }
 
-    private fun requestPermission() {
-        if (ContextCompat.checkSelfPermission(
-                this,
-                READ_CONTACTS_PERMISSION
-            ) != PackageManager.PERMISSION_GRANTED
-        ) {
-            ActivityCompat.requestPermissions(this, arrayOf(READ_CONTACTS_PERMISSION), 101)
-        }
-    }
-
     data class Contact(
-        val phoneName: String,
-        val phoneNumbers: ArrayList<String>?
+        val phoneName: String?,
+        val phoneNumber: String?
     ) {
-        override fun toString() = "Contanct(name = $phoneName, phone = [${phoneNumbers!!.joinToString { ", " }}])"
+        override fun toString() = "Contact(name = ${phoneName!!}, phone = ${phoneNumber!!})"
     }
 }
 

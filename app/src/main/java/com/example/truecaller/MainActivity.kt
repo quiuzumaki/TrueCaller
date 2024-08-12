@@ -29,12 +29,7 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         startService(Intent(this, CallerScreeningService::class.java))
-        val intent = Intent()
-        intent.apply {
-            setClass(this@MainActivity, ContactsManager::class.java)
-            putExtra(ContactsManager.PHONE_NUMBER_ID, "0912345678")
-        }
-        startActivity(intent)
+        Log.d(TAG, ContactsManager.getInstance(this).search("0912345678").toString())
         setContent {
             TrueCallerTheme {
                 MainScreen(onClick = {StartDialerActivity()})
