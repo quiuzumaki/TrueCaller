@@ -25,9 +25,9 @@ class DialerActivity: ComponentActivity() {
     private val ROLE_DIALER_PERMISSION = RoleManager.ROLE_DIALER
     private val intentLauncher: ActivityResultLauncher<Intent> = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
         if (it.resultCode == Activity.RESULT_OK) {
-            showToast("Success requesting ROLE_BROWSER!")
+            showToast("Success requesting!")
         } else {
-            showToast("Failed requesting ROLE_BROWSER")
+            showToast("Failed requesting")
         }
     }
     private lateinit var roleManager: RoleManager
@@ -41,21 +41,6 @@ class DialerActivity: ComponentActivity() {
             )
         } else {
             showToast("App is already by this app")
-        }
-    }
-
-    @RequiresApi(Build.VERSION_CODES.Q)
-    fun requestRoleDialer() {
-        if (roleManager.isRoleAvailable(ROLE_DIALER_PERMISSION)) {
-            if (!roleManager.isRoleHeld(ROLE_DIALER_PERMISSION)) {
-                intentLauncher.launch(
-                    roleManager.createRequestRoleIntent(ROLE_DIALER_PERMISSION)
-                )
-            } else {
-                showToast("App is already held by this app")
-            }
-        } else {
-            showToast("App does not exist")
         }
     }
 
@@ -92,4 +77,10 @@ class DialerActivity: ComponentActivity() {
         }
         telecomManager.placeCall(Uri.fromParts("tel", address, null), extras)
     }
+
+//    private fun addNewIncomingCall(incomingHandle: Uri) {
+//        val extras = Bundle()
+//        extras.putParcelable(TelecomManager.EXTRA_INCOMING_CALL_ADDRESS, incomingHandle)
+//        telecomManager.addNewIncomingCall(TEST_PHONE_ACCOUNT_HANDLE, extras)
+//    }
 }

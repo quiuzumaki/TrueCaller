@@ -19,9 +19,6 @@ class ContactsManager private constructor(val context: Context) {
     private val CONTENT_URI: Uri = ContactsContract.CommonDataKinds.Phone.CONTENT_URI
 
     private val TAG = ContactsManager::class.java.simpleName
-//    init {
-//
-//    }
     companion object {
         @Volatile private var INSTANCE: ContactsManager? = null
         val READ_CONTACTS_PERMISSION: String = Manifest.permission.READ_CONTACTS
@@ -29,7 +26,6 @@ class ContactsManager private constructor(val context: Context) {
             return INSTANCE ?: ContactsManager(ctx)
         }
     }
-
 
     @SuppressLint("Range")
     fun phoneLookup(phoneNumber: String): Contact? {
@@ -59,7 +55,7 @@ class ContactsManager private constructor(val context: Context) {
         return Contact("quido", phoneNumber)
     }
 
-    fun search(phoneNumber: String): Contact {
+    fun search(phoneNumber: String): Contact? {
         val projection = arrayOf(
             Phone.DISPLAY_NAME,
             Phone.NUMBER
@@ -82,7 +78,8 @@ class ContactsManager private constructor(val context: Context) {
                 val nameIndex = it.getColumnIndex(ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME)
                 contactName = it.getString(nameIndex)
             }
-        }
+        } ?: return null
+
         return Contact(contactName!!, phoneNumber)
     }
 

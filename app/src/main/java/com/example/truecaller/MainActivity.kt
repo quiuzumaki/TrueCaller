@@ -1,6 +1,7 @@
 package com.example.truecaller
 
 import android.Manifest
+import android.app.Activity
 import android.app.role.RoleManager
 import android.content.Context
 import android.content.Intent
@@ -13,14 +14,17 @@ import android.provider.ContactsContract
 import android.telecom.PhoneAccountHandle
 import android.telecom.TelecomManager
 import android.util.Log
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.annotation.RequiresApi
-import androidx.compose.ui.unit.Constraints
 import androidx.core.app.ActivityCompat
-import com.example.truecaller.defaultapp.CallerConnectionService
+import androidx.core.content.ContextCompat
+import com.example.truecaller.defaultcall.CallerDeflectorActivity
 import com.example.truecaller.screencallapp.DialerActivity
 import com.example.truecaller.screencallapp.CallerScreeningService
+import com.example.truecaller.telecom.call.TelecomCallActivity
+import com.example.truecaller.telecom.call.TelecomCallService
 import com.example.truecaller.ui.theme.TrueCallerTheme
 
 class MainActivity : ComponentActivity() {
@@ -28,34 +32,35 @@ class MainActivity : ComponentActivity() {
     @RequiresApi(Build.VERSION_CODES.O)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        startService(Intent(this, CallerScreeningService::class.java))
-        Log.d(TAG, ContactsManager.getInstance(this).search("0912345678").toString())
+        checkPermission()
         setContent {
             TrueCallerTheme {
-                MainScreen(onClick = {StartDialerActivity()})
+                MainScreen(onClick = {
+                    Toast.makeText(this, "Start", Toast.LENGTH_LONG).show()
+                    startActivity(
+                        Intent(this, CallerDeflectorActivity::class.java)
+                    )
+                })
+//                TelecomCallSample()
             }
         }
     }
+    private fun requestAllPermisstions() {
+        Log.d(TAG, "request all permission")
+        val permissions = listOf(
+            Manifest.permission.READ_PHONE_NUMBERS,
+            Manifest.permission.MANAGE_OWN_CALLS,
+            Manifest.permission.READ_PHONE_STATE,
+            Manifest.permission.READ_CONTACTS
+        )
+        permissions.forEach {
+            Log.d(TAG, "Request $it")
 
-    fun CreateActivity() {
-        val telecomManager = getSystemService(Context.TELECOM_SERVICE) as TelecomManager
-        val uri = Uri.fromParts("tel", "12345", null)
-        val extras = Bundle()
-        val connectionManagerPhoneAccount: PhoneAccountHandle? = null
-        extras.putParcelable(TelecomManager.EXTRA_PHONE_ACCOUNT_HANDLE, connectionManagerPhoneAccount)
-        checkPermission(Manifest.permission.READ_PHONE_STATE)
-        telecomManager.placeCall(uri, extras)
-    }
-    @RequiresApi(Build.VERSION_CODES.O)
-    fun StartReceiver() {
-        val r = CallerConnectionReceiver()
-        Log.d(TAG, "hello")
-//        val i = IntentFilter("android.permission.READ_PHONE_STATE")
-//        this.registerReceiver(r, i, RECEIVER_EXPORTED);
-    }
-    fun StartService() {
-        val intent = Intent(this, CallerConnectionService::class.java)
-        startService(intent)
+            if (ContextCompat.checkSelfPermission(this, it) != PackageManager.PERMISSION_GRANTED) {
+                Log.d(TAG, "Requested $it")
+                ActivityCompat.requestPermissions(this, arrayOf(it), 101)
+            }
+        }
     }
 
     fun main() {
@@ -85,7 +90,22 @@ class MainActivity : ComponentActivity() {
         intent.setClass(this, DialerActivity::class.java)
         startActivity(intent)
     }
-
+    private fun checkPermission() {
+        if (ActivityCompat.checkSelfPermission(
+                this,
+                Manifest.permission.READ_PHONE_NUMBERS
+            ) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(
+                this,
+                Manifest.permission.READ_PHONE_STATE
+            ) != PackageManager.PERMISSION_GRANTED
+        ) {
+            ActivityCompat.requestPermissions(
+                this as Activity,
+                arrayOf(Manifest.permission.READ_PHONE_NUMBERS, Manifest.permission.READ_PHONE_STATE),
+                101
+            )
+        }
+    }
     fun checkPermission(permission: String) {
         if (ActivityCompat.checkSelfPermission(this, permission) != PackageManager.PERMISSION_GRANTED) {
             ActivityCompat.requestPermissions(this, arrayOf(permission), 101)

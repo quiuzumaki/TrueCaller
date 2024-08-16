@@ -23,7 +23,7 @@ class CallerConnectionReceiver: BroadcastReceiver() {
     override fun onReceive(context: Context?, intent: Intent?) {
         this.context = context!!
         this.telephonyManager = context.getSystemService(Context.TELEPHONY_SERVICE) as TelephonyManager
-
+        Log.d(TAG, "onReceive")
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             telephonyManager.registerTelephonyCallback(
                 context.mainExecutor,
@@ -88,51 +88,5 @@ class CallerConnectionReceiver: BroadcastReceiver() {
         return false
     }
 
-    private fun checkPermission() {
-        if (ActivityCompat.checkSelfPermission(
-                this.context,
-                Manifest.permission.READ_PHONE_NUMBERS
-            ) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(
-                this.context,
-                Manifest.permission.READ_PHONE_STATE
-            ) != PackageManager.PERMISSION_GRANTED
-        ) {
-            ActivityCompat.requestPermissions(
-                this.context as Activity,
-                arrayOf(Manifest.permission.READ_PHONE_NUMBERS, Manifest.permission.READ_PHONE_STATE),
-                101
-            )
-        }
-    }
-
-    @RequiresApi(Build.VERSION_CODES.S)
-    private class CallerStateListener: TelephonyCallback() , TelephonyCallback.CallStateListener {
-        private val TAG = CallerStateListener::class.java.simpleName
-        override fun onCallStateChanged(state: Int) {
-            when(state) {
-                TelephonyManager.CALL_STATE_RINGING -> {
-                    // A new call arrived and is ringing or waiting. In the latter case, another call is already active.
-                    Log.d(TAG, "CALL_STATE_RINGING")
-                }
-                TelephonyManager.CALL_STATE_IDLE -> {
-                    // Call has ended/No activity
-                    Log.d(TAG, "CALL_STATE_IDLE")
-                }
-                TelephonyManager.CALL_STATE_OFFHOOK -> {
-                    // At least one call exists that is dialing, active, or on hold, and no calls are ringing or waiting.
-                    Log.d(TAG, "CALL_STATE_OFFHOOK")
-                }
-            }
-        }
-    }
-
-    @RequiresApi(Build.VERSION_CODES.S)
-    private class CallerServiceStateListener: TelephonyCallback(), TelephonyCallback.ServiceStateListener {
-        private val TAG = CallerServiceStateListener::class.java.simpleName
-        override fun onServiceStateChanged(serviceState: ServiceState) {
-            val channelNumber = serviceState.channelNumber
-            Log.i(TAG, channelNumber.toString())
-        }
-    }
 
 }
