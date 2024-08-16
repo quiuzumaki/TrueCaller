@@ -46,17 +46,6 @@ class MainActivity : ComponentActivity() {
         checkPermission(Manifest.permission.READ_PHONE_STATE)
         telecomManager.placeCall(uri, extras)
     }
-    @RequiresApi(Build.VERSION_CODES.O)
-    fun StartReceiver() {
-        val r = CallerConnectionReceiver()
-        Log.d(TAG, "hello")
-//        val i = IntentFilter("android.permission.READ_PHONE_STATE")
-//        this.registerReceiver(r, i, RECEIVER_EXPORTED);
-    }
-    fun StartService() {
-        val intent = Intent(this, CallerConnectionService::class.java)
-        startService(intent)
-    }
 
     fun main() {
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {

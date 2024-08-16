@@ -1,23 +1,17 @@
-package com.example.truecaller.defaultapp
+package com.example.truecaller.defaultcall
 
-import android.Manifest
-import android.content.Context
 import android.content.Intent
-import android.content.pm.PackageManager
 import android.net.Uri
-import android.os.Build
 import android.os.Bundle
-import android.provider.ContactsContract.CommonDataKinds.Phone
-import android.telecom.Call
+import android.provider.CallLog.Calls.PRESENTATION_ALLOWED
 import android.telecom.Connection
 import android.telecom.ConnectionRequest
 import android.telecom.ConnectionService
 import android.telecom.DisconnectCause
 import android.telecom.PhoneAccountHandle
 import android.telecom.TelecomManager
+import android.telecom.VideoProfile
 import android.util.Log
-import androidx.annotation.RequiresApi
-import androidx.core.app.ActivityCompat
 
 
 class CallerConnectionService: ConnectionService() {
@@ -33,7 +27,6 @@ class CallerConnectionService: ConnectionService() {
         Log.d(TAG, "onStartCommmand")
     }
 
-    @RequiresApi(Build.VERSION_CODES.N_MR1)
     override fun onCreateIncomingConnection(
         connectionManagerPhoneAccount: PhoneAccountHandle?,
         request: ConnectionRequest?
@@ -41,22 +34,22 @@ class CallerConnectionService: ConnectionService() {
         super.onCreateIncomingConnection(connectionManagerPhoneAccount, request)
         val accountHandle  = request?.accountHandle
         if (accountHandle != null) {
-            val connection = CallerConnection()
-            val address = request?.extras?.getString("from")
-
-            connection.apply{
-                setRinging()
-                setAddress(Uri.parse("tel:$address"), TelecomManager.PRESENTATION_ALLOWED)
-                setCallerDisplayName("Calling", TelecomManager.PRESENTATION_ALLOWED)
-            }
-            return connection
+//            val connection = CallerConnection()
+//            val address = request?.extras?.getString("from")
+//
+//            connection.apply{
+//                setRinging()
+//                setAddress(Uri.parse("tel:$address"), TelecomManager.PRESENTATION_ALLOWED)
+//                setCallerDisplayName("Calling", TelecomManager.PRESENTATION_ALLOWED)
+//            }
+//            return connection
+            return createCall(request.address)
         } else {
             return Connection.createFailedConnection((DisconnectCause(DisconnectCause.ERROR,
                 "Invalid inputs: " + accountHandle)))
         }
     }
 
-    @RequiresApi(Build.VERSION_CODES.N_MR1)
     override fun onCreateOutgoingConnection(
         connectionManagerPhoneAccount: PhoneAccountHandle?,
         request: ConnectionRequest?
@@ -83,31 +76,15 @@ class CallerConnectionService: ConnectionService() {
         Log.d(TAG, "onCreateOutgoingConnectionFailed")
     }
 
-    fun demo(
-        connectionManagerPhoneAccount: PhoneAccountHandle?,
-        request: ConnectionRequest?
-    ): Connection {
-        super.onCreateOutgoingConnection(connectionManagerPhoneAccount, request)
-        val telecomManager = getSystemService(Context.TELECOM_SERVICE) as TelecomManager
-        val uri = Uri.fromParts("tel", "12345", null)
+    private fun createCall(phoneNumber: Uri): CallerConnection {
+        val conn = CallerConnection()
         val extras = Bundle()
-        extras.putParcelable(TelecomManager.EXTRA_PHONE_ACCOUNT_HANDLE, connectionManagerPhoneAccount)
-        if (ActivityCompat.checkSelfPermission(
-                this,
-                Manifest.permission.CALL_PHONE
-            ) != PackageManager.PERMISSION_GRANTED
-        ) {
-            // TODO: Consider calling
-            //    ActivityCompat#requestPermissions
-            // here to request the missing permissions, and then overriding
-            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
-            //                                          int[] grantResults)
-            // to handle the case where the user grants the permission. See the documentation
-            // for ActivityCompat#requestPermissions for more details.
-            return Connection.createFailedConnection(DisconnectCause(DisconnectCause.CANCELED))
-        }
-        telecomManager.placeCall(uri, extras)
-        return CallerConnection()
+        conn.setAddress(phoneNumber, PRESENTATION_ALLOWED)
+        conn.setVideoState(VideoProfile.STATE_AUDIO_ONLY)
+        conn.setExtras(extras)
+        conn.setConnectionCapabilities(Connection.CAPABILITY_SUPPORT_DEFLECT)
+        conn.setRingbackRequested(true)
+        conn.setActive()
+        return conn
     }
-
 }
