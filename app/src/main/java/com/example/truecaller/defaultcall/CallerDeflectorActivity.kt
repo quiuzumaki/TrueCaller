@@ -6,6 +6,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
+import android.os.Build
 import android.os.Bundle
 import android.telecom.PhoneAccount
 import android.telecom.PhoneAccountHandle
@@ -24,74 +25,58 @@ import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import com.example.truecaller.R
 
+
 class CallerDeflectorActivity: ComponentActivity() {
+    private val TAG: String = CallerConnectionService::class.java.simpleName
+    private val PHONENUMBER: Uri = Uri.fromParts("tel:", "0914143822", null)
+    private val connectionServiceId: String = TAG + ".connectionService"
 
     private var CALL_PERMISSION_REQUEST = 99
     private var phoneAccount: PhoneAccount? = null
+    private lateinit var telecomManager: TelecomManager
+    private lateinit var phoneAccountHandle: PhoneAccountHandle
+    private lateinit var callerManager: CallerManager
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        telecomManager = getSystemService(Context.TELECOM_SERVICE) as TelecomManager
+        phoneAccountHandle = PhoneAccountHandle(
+            ComponentName(applicationContext, CallerConnectionService::class.java),
+            connectionServiceId
+        )
+        callerManager = CallerManager(this)
+
 
         setContent {
             CallScreen()
         }
 
-        registerConnectionService()
+        registerPhoneAccount()
+        incomingCall()
     }
 
-    fun registerConnectionService() {
-        val manager = getSystemService(Context.TELECOM_SERVICE) as TelecomManager
-        val connectionServiceId = applicationContext.packageName + ".connectionService"
-
-        val componentName =
-            ComponentName(applicationContext, CallerConnectionService::class.java)
-        val phoneAccountHandle = PhoneAccountHandle(componentName, connectionServiceId)
-        phoneAccount = manager.getPhoneAccount(phoneAccountHandle)
-        if (phoneAccount == null) { // no phone account from us registered yet
-            val builder = PhoneAccount.builder(
-                phoneAccountHandle,
-                this.resources.getText(R.string.app_name)
-            )
-            val uri = Uri.parse("ftel:987654321")
-            builder.setSubscriptionAddress(uri)
-            builder.setAddress(uri)
-            builder.setCapabilities(PhoneAccount.CAPABILITY_CALL_PROVIDER)
-            phoneAccount = builder.build()
-            manager.registerPhoneAccount(phoneAccount)
-        }
-    }
-    fun showPhoneAccount() {
-        val intent = Intent()
-        intent.component = ComponentName(
-            "com.android.server.telecom",
-            "com.android.server.telecom.settings.EnableAccountPreferenceActivity"
+    private fun registerPhoneAccount() {
+        val builder = PhoneAccount.builder(
+            phoneAccountHandle,
+            this.resources.getText(R.string.app_name)
         )
-        intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
-        startActivity(intent)
-    }
-    fun hasCallPermission(): Boolean {
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.MANAGE_OWN_CALLS)
-            == PackageManager.PERMISSION_GRANTED)
-        {
-            if (ContextCompat.checkSelfPermission(this, Manifest.permission.CALL_PHONE)
-                == PackageManager.PERMISSION_GRANTED)
-                return true
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            builder.setCapabilities(PhoneAccount.CAPABILITY_SELF_MANAGED)
         }
-        return false
+        val phoneAccount = builder.build()
+        telecomManager.registerPhoneAccount(phoneAccount)
+    }
+    
+    private fun incomingCall() {
+        val extras: Bundle = Bundle()
+        extras.putParcelable(TelecomManager.EXTRA_PHONE_ACCOUNT_HANDLE, phoneAccountHandle)
+        extras.putParcelable(TelecomManager.EXTRA_INCOMING_CALL_EXTRAS, PHONENUMBER)
+        extras.putBoolean(TelecomManager.METADATA_IN_CALL_SERVICE_UI, true)
+        telecomManager.addNewIncomingCall(phoneAccountHandle, extras)
     }
 
-    fun requestInCallPermission() {
-
-        // Here, thisActivity is the current activity
-        if (!hasCallPermission()) {
-
-            ActivityCompat.requestPermissions(this,
-                arrayOf(Manifest.permission.MANAGE_OWN_CALLS, Manifest.permission.CALL_PHONE),
-                CALL_PERMISSION_REQUEST)
-        } else {
-            // Permission has already been granted
-        }
-    }
-    fun showCallScreen() {
+    private fun showCallScreen() {
 
         if (hasCallPermission() ) {
 
@@ -99,9 +84,6 @@ class CallerDeflectorActivity: ComponentActivity() {
 
             if (account != null) {
                 val uri = Uri.fromParts("tel", "123456789", null)
-
-                val compontentName =
-                    ComponentName(getPackageName(), CallerConnectionService::class.java.name)
 
                 var handle = account.accountHandle
 
@@ -123,8 +105,7 @@ class CallerDeflectorActivity: ComponentActivity() {
         }
     }
 
-    override fun onRequestPermissionsResult(requestCode: Int,
-                                            permissions: Array<String>, grantResults: IntArray) {
+    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<String>, grantResults: IntArray) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         when (requestCode) {
             CALL_PERMISSION_REQUEST -> {
@@ -148,6 +129,7 @@ class CallerDeflectorActivity: ComponentActivity() {
             }
         }
     }
+
     @Composable
     fun CallScreen() {
         Column(
@@ -155,12 +137,36 @@ class CallerDeflectorActivity: ComponentActivity() {
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
-            Button(onClick = { showPhoneAccount() }) {
+            Button(onClick = { callerManager.showPhoneAccount() }) {
                 Text(text = "Show PhoneAccount")
             }
             Button(onClick = { showCallScreen() }) {
                 Text(text = "Show Call Screen")
             }
+        }
+    }
+
+    private fun hasCallPermission(): Boolean {
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.MANAGE_OWN_CALLS)
+            == PackageManager.PERMISSION_GRANTED)
+        {
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.CALL_PHONE)
+                == PackageManager.PERMISSION_GRANTED)
+                return true
+        }
+        return false
+    }
+
+    private fun requestInCallPermission() {
+
+        // Here, thisActivity is the current activity
+        if (!hasCallPermission()) {
+
+            ActivityCompat.requestPermissions(this,
+                arrayOf(Manifest.permission.MANAGE_OWN_CALLS, Manifest.permission.CALL_PHONE),
+                CALL_PERMISSION_REQUEST)
+        } else {
+            // Permission has already been granted
         }
     }
 

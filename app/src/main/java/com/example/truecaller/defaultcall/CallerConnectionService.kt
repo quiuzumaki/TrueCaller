@@ -10,9 +10,7 @@ import android.telecom.ConnectionService
 import android.telecom.DisconnectCause
 import android.telecom.PhoneAccountHandle
 import android.telecom.TelecomManager
-import android.telecom.VideoProfile
 import android.util.Log
-
 
 class CallerConnectionService: ConnectionService() {
     private val TAG = ConnectionService::class.java.simpleName
@@ -33,17 +31,9 @@ class CallerConnectionService: ConnectionService() {
     ): Connection {
         super.onCreateIncomingConnection(connectionManagerPhoneAccount, request)
         val accountHandle  = request?.accountHandle
+        Log.i(TAG, "onCreateIncomingConnection\nrequest.address: %s".format(request?.address.toString()))
         if (accountHandle != null) {
-//            val connection = CallerConnection()
-//            val address = request?.extras?.getString("from")
-//
-//            connection.apply{
-//                setRinging()
-//                setAddress(Uri.parse("tel:$address"), TelecomManager.PRESENTATION_ALLOWED)
-//                setCallerDisplayName("Calling", TelecomManager.PRESENTATION_ALLOWED)
-//            }
-//            return connection
-            return createCall(request.address)
+            return createCall(request.address ?: Uri.fromParts("tel", "0914143822", null))
         } else {
             return Connection.createFailedConnection((DisconnectCause(DisconnectCause.ERROR,
                 "Invalid inputs: " + accountHandle)))
@@ -68,23 +58,31 @@ class CallerConnectionService: ConnectionService() {
         return connection
     }
 
+    override fun onCreateIncomingConnectionFailed(
+        connectionManagerPhoneAccount: PhoneAccountHandle?,
+        request: ConnectionRequest?
+    ) {
+        Log.d(TAG, "onCreateIncomingConnectionFailed")
+        super.onCreateIncomingConnectionFailed(connectionManagerPhoneAccount, request)
+    }
+
     override fun onCreateOutgoingConnectionFailed(
         connectionManagerPhoneAccount: PhoneAccountHandle?,
         request: ConnectionRequest?
     ) {
-        super.onCreateOutgoingConnectionFailed(connectionManagerPhoneAccount, request)
         Log.d(TAG, "onCreateOutgoingConnectionFailed")
+        super.onCreateOutgoingConnectionFailed(connectionManagerPhoneAccount, request)
     }
 
-    private fun createCall(phoneNumber: Uri): CallerConnection {
-        val conn = CallerConnection()
+    private fun createCall(phoneNumber: Uri?): CallerConnection {
+        val connection = CallerConnection()
         val extras = Bundle()
-        conn.setAddress(phoneNumber, PRESENTATION_ALLOWED)
-        conn.setVideoState(VideoProfile.STATE_AUDIO_ONLY)
-        conn.setExtras(extras)
-        conn.setConnectionCapabilities(Connection.CAPABILITY_SUPPORT_DEFLECT)
-        conn.setRingbackRequested(true)
-        conn.setActive()
-        return conn
+        connection.setAddress(phoneNumber, PRESENTATION_ALLOWED)
+        connection.extras = extras
+        connection.setConnectionCapabilities(Connection.CAPABILITY_SUPPORT_DEFLECT)
+        connection.setRingbackRequested(true)
+        connection.setActive()
+        connection.setRinging()
+        return connection
     }
 }
