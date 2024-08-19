@@ -19,6 +19,7 @@ class CallerConnectionReceiver: BroadcastReceiver() {
     private lateinit var context: Context
     private val TAG = CallerConnectionReceiver::class.java.simpleName
     private lateinit var telephonyManager: TelephonyManager
+
     @RequiresApi(Build.VERSION_CODES.S)
     override fun onReceive(context: Context?, intent: Intent?) {
         this.context = context!!
