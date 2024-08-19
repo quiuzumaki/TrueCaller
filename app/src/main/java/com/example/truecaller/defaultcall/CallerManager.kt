@@ -6,12 +6,14 @@ import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.graphics.drawable.Icon
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.telecom.PhoneAccount
 import android.telecom.PhoneAccountHandle
 import android.telecom.TelecomManager
+import androidx.compose.ui.res.painterResource
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import com.example.truecaller.R
@@ -19,10 +21,12 @@ import com.example.truecaller.R
 class CallerManager public constructor(val ctx: Context) {
     private val TAG: String = CallerManager::class.java.simpleName
     private val PHONE_ACCOUNT_ID = TAG + ".PHONE_ACCOUNT_ID"
+    private val PHONENUMBER: Uri = Uri.fromParts(PhoneAccount.SCHEME_TEL, "0914143822", null)
 
-    private lateinit var telecomManager: TelecomManager
+    private var telecomManager: TelecomManager
+    private var phoneAccountHandle: PhoneAccountHandle
+
     private lateinit var phoneAccount: PhoneAccount
-    private lateinit var phoneAccountHandle: PhoneAccountHandle
 
     init {
         this.telecomManager = ctx.getSystemService(Context.TELECOM_SERVICE) as TelecomManager
@@ -30,6 +34,7 @@ class CallerManager public constructor(val ctx: Context) {
             ComponentName(ctx, CallerConnectionService::class.java),
             PHONE_ACCOUNT_ID
         )
+        registerPhoneAccount()
     }
 
     private fun registerPhoneAccount() {
@@ -37,20 +42,33 @@ class CallerManager public constructor(val ctx: Context) {
             phoneAccountHandle,
             ctx.resources.getText(R.string.app_name)
         )
+
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             builder.setCapabilities(PhoneAccount.CAPABILITY_SELF_MANAGED)
         }
-        val phoneAccount = builder.build()
-        telecomManager.registerPhoneAccount(phoneAccount)
+        this.phoneAccount = builder
+            .setCapabilities(
+//                PhoneAccount.CAPABILITY_CONNECTION_MANAGER or
+                PhoneAccount.CAPABILITY_CALL_PROVIDER
+            )
+            .addSupportedUriScheme(PhoneAccount.SCHEME_TEL)
+            .build()
+        telecomManager.registerPhoneAccount(this.phoneAccount)
+    }
+
+    public fun enablePhoneAccount() {
+        val intent = Intent(TelecomManager.ACTION_CHANGE_PHONE_ACCOUNTS)
+        intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_MULTIPLE_TASK
+        ctx.startActivity(intent)
     }
 
     public fun showPhoneAccount() {
         val intent = Intent().apply {
-            setComponent(ComponentName(
+            component = ComponentName(
                 "com.android.server.telecom",
                 "com.android.server.telecom.settings.EnableAccountPreferenceActivity"
-            ))
-            setFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            )
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK
         }
         ctx.startActivity(intent)
     }
@@ -58,11 +76,10 @@ class CallerManager public constructor(val ctx: Context) {
     public fun incomingCall() {
         val extras: Bundle = Bundle()
         extras.putParcelable(TelecomManager.EXTRA_PHONE_ACCOUNT_HANDLE, phoneAccountHandle)
-        extras.putParcelable(TelecomManager.EXTRA_INCOMING_CALL_EXTRAS, PHONENUMBER)
         extras.putBoolean(TelecomManager.METADATA_IN_CALL_SERVICE_UI, true)
+        extras.putParcelable(TelecomManager.EXTRA_INCOMING_CALL_ADDRESS, this.PHONENUMBER)
         telecomManager.addNewIncomingCall(phoneAccountHandle, extras)
     }
-
 
     public fun outgoingCall(phoneNumber: String) {
         val outgoingUri =
@@ -80,7 +97,7 @@ class CallerManager public constructor(val ctx: Context) {
             ) != PackageManager.PERMISSION_GRANTED &&
             ContextCompat.checkSelfPermission(
                 ctx,
-                Manifest.permission.CALL_PHONE
+                Manifest.permission.MANAGE_OWN_CALLS
             ) != PackageManager.PERMISSION_GRANTED
         ) {
             ActivityCompat.requestPermissions(
