@@ -102,7 +102,6 @@ class TelecomCallService : Service() {
         if (telecomRepository.currentCall.value is TelecomCall.Registered) {
             return
         }
-        Log.d(TAG, "registerCall")
         val name = intent.getStringExtra(EXTRA_NAME)!!
         val uri = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             intent.getParcelableExtra(EXTRA_URI, Uri::class.java)!!

@@ -15,6 +15,7 @@
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"
         tools:ignore="CoarseFineLocation" />
+
     <application
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
@@ -36,26 +37,26 @@
             </intent-filter>
         </activity>
 
-        <activity
-            android:name=".screencallapp.DialerActivity"
-            android:label="@string/title_activity_dialer"
-            android:exported="false">
-            <intent-filter>
-                <action android:name="android.intent.action.DIAL" />
-                <category android:name="android.intent.category.DEFAULT" />
-            </intent-filter>
-            <intent-filter>
-                <action android:name="android.intent.action.DIAL" />
-                <category android:name="android.intent.category.DEFAULT" />
-                <data android:scheme="tel" />
-            </intent-filter>
-        </activity>
+<!--        <activity-->
+<!--            android:name=".screencallapp.DialerActivity"-->
+<!--            android:label="@string/title_activity_dialer"-->
+<!--            android:exported="false">-->
+<!--            <intent-filter>-->
+<!--                <action android:name="android.intent.action.DIAL" />-->
+<!--                <category android:name="android.intent.category.DEFAULT" />-->
+<!--            </intent-filter>-->
+<!--            <intent-filter>-->
+<!--                <action android:name="android.intent.action.DIAL" />-->
+<!--                <category android:name="android.intent.category.DEFAULT" />-->
+<!--                <data android:scheme="tel" />-->
+<!--            </intent-filter>-->
+<!--        </activity>-->
 
-        <activity
-            android:name=".ContactsManager"
-            android:exported="false"
-            android:theme="@style/Theme.TrueCaller">
-        </activity>
+<!--        <activity-->
+<!--            android:name=".ContactsManager"-->
+<!--            android:exported="false"-->
+<!--            android:theme="@style/Theme.TrueCaller">-->
+<!--        </activity>-->
 
         <activity
             android:name=".defaultcall.CallerDeflectorActivity"
@@ -63,29 +64,29 @@
             android:theme="@style/Theme.TrueCaller">
         </activity>
 
-        <service
-            android:name=".telecom.call.TelecomCallService"
-            android:exported="false" />
+<!--        <service-->
+<!--            android:name=".telecom.call.TelecomCallService"-->
+<!--            android:exported="false" />-->
 
         <service android:name="com.example.truecaller.defaultcall.CallerConnectionService"
             android:permission="android.permission.BIND_TELECOM_CONNECTION_SERVICE"
-            android:exported="false">
+            android:exported="true">
             <intent-filter>
                 <action android:name="android.telecom.ConnectionService" />
             </intent-filter>
         </service>
 
-        <activity
-            android:name=".telecom.call.TelecomCallActivity"
-            android:exported="true"
-            android:launchMode="singleInstance"
-            android:showOnLockScreen="true"
-            android:showWhenLocked="true"
-            android:turnScreenOn="true" />
+<!--        <activity-->
+<!--            android:name=".telecom.call.TelecomCallActivity"-->
+<!--            android:exported="true"-->
+<!--            android:launchMode="singleInstance"-->
+<!--            android:showOnLockScreen="true"-->
+<!--            android:showWhenLocked="true"-->
+<!--            android:turnScreenOn="true" />-->
 
-        <receiver
-            android:name=".telecom.call.TelecomCallBroadcast"
-            android:exported="true" />
+<!--        <receiver-->
+<!--            android:name=".telecom.call.TelecomCallBroadcast"-->
+<!--            android:exported="true" />-->
 
         <service
             android:name=".screencallapp.CallerScreeningService"
@@ -96,14 +97,14 @@
             </intent-filter>
         </service>
 
-        <receiver
-            android:name=".CallerConnectionReceiver"
-            android:enabled="true"
-            android:exported="true">
-            <intent-filter>
-                <action android:name="android.intent.action.PHONE_STATE" />
-            </intent-filter>
-        </receiver>
+<!--        <receiver-->
+<!--            android:name=".CallerConnectionReceiver"-->
+<!--            android:enabled="true"-->
+<!--            android:exported="true">-->
+<!--            <intent-filter>-->
+<!--                <action android:name="android.intent.action.PHONE_STATE" />-->
+<!--            </intent-filter>-->
+<!--        </receiver>-->
 
     </application>
 

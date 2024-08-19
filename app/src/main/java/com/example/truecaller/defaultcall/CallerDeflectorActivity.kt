@@ -1,107 +1,72 @@
 package com.example.truecaller.defaultcall
 
 import android.Manifest
-import android.content.ComponentName
-import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
-import android.os.Build
 import android.os.Bundle
-import android.telecom.PhoneAccount
-import android.telecom.PhoneAccountHandle
 import android.telecom.TelecomManager
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.wrapContentSize
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.Button
+import androidx.compose.material.ButtonDefaults
+import androidx.compose.material.Icon
 import androidx.compose.material.Text
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Call
+import androidx.compose.material.icons.filled.Clear
+import androidx.compose.material.icons.filled.Person
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
-import com.example.truecaller.R
 
 
 class CallerDeflectorActivity: ComponentActivity() {
-    private val TAG: String = CallerConnectionService::class.java.simpleName
+    private val TAG: String = CallerDeflectorActivity::class.java.simpleName
     private val PHONENUMBER: Uri = Uri.fromParts("tel:", "0914143822", null)
-    private val connectionServiceId: String = TAG + ".connectionService"
 
     private var CALL_PERMISSION_REQUEST = 99
-    private var phoneAccount: PhoneAccount? = null
-    private lateinit var telecomManager: TelecomManager
-    private lateinit var phoneAccountHandle: PhoneAccountHandle
     private lateinit var callerManager: CallerManager
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
-        telecomManager = getSystemService(Context.TELECOM_SERVICE) as TelecomManager
-        phoneAccountHandle = PhoneAccountHandle(
-            ComponentName(applicationContext, CallerConnectionService::class.java),
-            connectionServiceId
-        )
         callerManager = CallerManager(this)
+
+        val intent: Intent? = intent
+        val phoneNumber = intent?.getStringExtra("uri") ?: "0914143822"
+        val name = intent?.getStringExtra("name") ?: "quido"
+        Log.d(TAG, "Receiver(%s\n%s)".format(phoneNumber, name))
+
+//        callerManager.enablePhoneAccount()
+
+
 
 
         setContent {
-            CallScreen()
-        }
-
-        registerPhoneAccount()
-        incomingCall()
-    }
-
-    private fun registerPhoneAccount() {
-        val builder = PhoneAccount.builder(
-            phoneAccountHandle,
-            this.resources.getText(R.string.app_name)
-        )
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            builder.setCapabilities(PhoneAccount.CAPABILITY_SELF_MANAGED)
-        }
-        val phoneAccount = builder.build()
-        telecomManager.registerPhoneAccount(phoneAccount)
-    }
-    
-    private fun incomingCall() {
-        val extras: Bundle = Bundle()
-        extras.putParcelable(TelecomManager.EXTRA_PHONE_ACCOUNT_HANDLE, phoneAccountHandle)
-        extras.putParcelable(TelecomManager.EXTRA_INCOMING_CALL_EXTRAS, PHONENUMBER)
-        extras.putBoolean(TelecomManager.METADATA_IN_CALL_SERVICE_UI, true)
-        telecomManager.addNewIncomingCall(phoneAccountHandle, extras)
-    }
-
-    private fun showCallScreen() {
-
-        if (hasCallPermission() ) {
-
-            val account = this.phoneAccount
-
-            if (account != null) {
-                val uri = Uri.fromParts("tel", "123456789", null)
-
-                var handle = account.accountHandle
-
-                val extras = Bundle()
-                extras.putParcelable(TelecomManager.EXTRA_PHONE_ACCOUNT_HANDLE, handle)
-
-                val manager = getSystemService(Context.TELECOM_SERVICE) as TelecomManager
-                if (ActivityCompat.checkSelfPermission(
-                        this,
-                        Manifest.permission.CALL_PHONE
-                    ) != PackageManager.PERMISSION_GRANTED
-                ) {
-                    requestInCallPermission()
-                }
-                manager.placeCall(uri, extras)
-            }
-        } else {
-            requestInCallPermission()
+            showOnCall(
+                ContactDetail(name, phoneNumber, INFO_STATUS.SPAM),
+                onAnswer = {},
+                onReject = {}
+            )
         }
     }
 
@@ -113,8 +78,6 @@ class CallerDeflectorActivity: ComponentActivity() {
                 if ((grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED)) {
                     // permission was granted, yay! Do the
                     // contacts-related task you need to do.
-                    showCallScreen()
-
                 } else {
                     // permission denied, boo! Disable the
                     // functionality that depends on this permission.
@@ -126,22 +89,6 @@ class CallerDeflectorActivity: ComponentActivity() {
             // permissions this app might request.
             else -> {
                 // Ignore all other requests.
-            }
-        }
-    }
-
-    @Composable
-    fun CallScreen() {
-        Column(
-            modifier = Modifier.fillMaxSize(),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
-        ) {
-            Button(onClick = { callerManager.showPhoneAccount() }) {
-                Text(text = "Show PhoneAccount")
-            }
-            Button(onClick = { showCallScreen() }) {
-                Text(text = "Show Call Screen")
             }
         }
     }
@@ -169,7 +116,97 @@ class CallerDeflectorActivity: ComponentActivity() {
             // Permission has already been granted
         }
     }
-
 }
 
 
+@Composable
+fun showOnCall(
+    contactDetail: ContactDetail,
+    onAnswer: () -> Unit?,
+    onReject: () -> Unit?
+) {
+    Column(
+        modifier = Modifier.fillMaxSize(),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.SpaceEvenly
+    ) {
+        showInfo(contactDetail = contactDetail)
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceEvenly,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Button(
+                onClick = { onAnswer() },
+                colors = ButtonDefaults.buttonColors(backgroundColor = Color.Green),
+                modifier = Modifier
+                    .size(80.dp)
+                    .clip(CircleShape)
+            ) {
+                Icon(imageVector = Icons.Default.Call, contentDescription = "")
+            }
+            Button(
+                onClick = { onReject() },
+                colors = ButtonDefaults.buttonColors(backgroundColor = Color.Red),
+                modifier = Modifier
+                    .size(80.dp)
+                    .clip(CircleShape)
+            ) {
+                Icon(imageVector = Icons.Default.Clear, contentDescription = "")
+            }
+        }
+    }
+}
+
+@Composable
+fun showInfo(contactDetail: ContactDetail) {
+    Column(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        val infoStatus = contactDetail.infoStatus
+        val fontSize = 25.sp
+        val modifier = Modifier.padding(top = 10.dp, bottom = 10.dp)
+
+        // STATUS
+        Text(
+            text = contactDetail.infoStatus.toString(),
+            fontSize = fontSize,
+            modifier = modifier
+        )
+        // Icon
+        Box(
+            modifier = Modifier
+                .wrapContentSize()
+                .clip(CircleShape)
+                .background(
+                    color = when (infoStatus) {
+                        INFO_STATUS.KNOWN -> Color.White
+                        INFO_STATUS.UNKNOWN -> Color.Gray
+                        INFO_STATUS.SPAM -> Color.Red
+                    }
+                ),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(imageVector = Icons.Default.Person, contentDescription = "",
+                modifier = Modifier.size(200.dp))
+        }
+
+        // PhoneNumber
+        Text(text = contactDetail.phoneNumber, modifier = modifier, fontSize = fontSize)
+        // Name
+        Text(text = contactDetail.name, modifier = modifier, fontSize = fontSize)
+    }
+}
+
+@Composable
+@Preview(showBackground = true, backgroundColor = 0xffffff)
+fun demoScreen() {
+    showOnCall(
+        ContactDetail("quido", "0911222121", INFO_STATUS.SPAM),
+        {},
+        {}
+    )
+}

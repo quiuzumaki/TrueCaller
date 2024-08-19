@@ -6,8 +6,9 @@ import android.telecom.Connection
 import android.telecom.ConnectionRequest
 import android.telecom.DisconnectCause
 import android.util.Log
+import androidx.compose.runtime.Composable
 
-class CallerConnection(var originalRequest: ConnectionRequest? = null): Connection() {
+class CallerConnection: Connection() {
     private val TAG: String = CallerConnection::class.java.simpleName
     override fun onShowIncomingCallUi() {
         super.onShowIncomingCallUi()
