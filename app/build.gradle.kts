@@ -66,14 +66,16 @@ dependencies {
     implementation(libs.constraintlayout)
     implementation(libs.navigation.fragment.ktx)
     implementation(libs.navigation.ui.ktx)
+    implementation(libs.androidx.core.telecom)
+
     implementation("androidx.compose.ui:ui")
     implementation("androidx.compose.ui:ui-graphics")
     implementation("androidx.compose.ui:ui-tooling-preview")
     implementation("androidx.compose.material3:material3")
     implementation("androidx.compose.material:material:1.6.7")
     implementation("androidx.navigation:navigation-compose:2.7.7")
-    implementation(libs.androidx.core.telecom)
     implementation("com.google.accompanist:accompanist-permissions:0.35.1-alpha")
+
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)

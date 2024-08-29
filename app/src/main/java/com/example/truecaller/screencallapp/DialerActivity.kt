@@ -11,6 +11,7 @@ import android.os.Build
 import android.os.Bundle
 import android.telecom.PhoneAccountHandle
 import android.telecom.TelecomManager
+import android.util.Log
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -18,42 +19,43 @@ import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.RequiresApi
 import androidx.core.app.ActivityCompat
+import com.example.truecaller.defaultcall.ContactDetail
+import com.example.truecaller.defaultcall.INFO_STATUS
+import com.example.truecaller.defaultcall.showOnCall
 
 class DialerActivity: ComponentActivity() {
+    private val TAG: String = DialerActivity::class.java.simpleName
+
     private val PHONE = "091211212"
     private val ROLE_CALL_SCREENING_PERMISSION = RoleManager.ROLE_CALL_SCREENING
-    private val ROLE_DIALER_PERMISSION = RoleManager.ROLE_DIALER
     private val intentLauncher: ActivityResultLauncher<Intent> = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
         if (it.resultCode == Activity.RESULT_OK) {
-            showToast("Success requesting!")
+            Log.d(TAG, "Success requesting ROLE_CALL_SCREENING!")
         } else {
-            showToast("Failed requesting")
+            Log.d(TAG,"Failed requesting ROLE_CALL_SCREENING")
         }
     }
-    private lateinit var roleManager: RoleManager
     @RequiresApi(Build.VERSION_CODES.Q)
     fun requestRoleCallScreening() {
+        val roleManager: RoleManager = getSystemService(Context.ROLE_SERVICE) as RoleManager
         if (roleManager.isRoleAvailable(ROLE_CALL_SCREENING_PERMISSION) &&
             !roleManager.isRoleHeld(ROLE_CALL_SCREENING_PERMISSION)
         ) {
             intentLauncher.launch(
                 roleManager.createRequestRoleIntent(ROLE_CALL_SCREENING_PERMISSION)
             )
-        } else {
-            showToast("App is already by this app")
         }
     }
 
     @RequiresApi(Build.VERSION_CODES.Q)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        roleManager = getSystemService(Context.ROLE_SERVICE) as RoleManager
         requestRoleCallScreening()
         setContent {
-            DialerScreen (
-                {
-                    placeCall()
-                }
+            showOnCall(
+                ContactDetail("quido", "0914143822", INFO_STATUS.SPAM),
+                onAnswer = {},
+                onReject = {}
             )
         }
     }
@@ -77,10 +79,4 @@ class DialerActivity: ComponentActivity() {
         }
         telecomManager.placeCall(Uri.fromParts("tel", address, null), extras)
     }
-
-//    private fun addNewIncomingCall(incomingHandle: Uri) {
-//        val extras = Bundle()
-//        extras.putParcelable(TelecomManager.EXTRA_INCOMING_CALL_ADDRESS, incomingHandle)
-//        telecomManager.addNewIncomingCall(TEST_PHONE_ACCOUNT_HANDLE, extras)
-//    }
 }

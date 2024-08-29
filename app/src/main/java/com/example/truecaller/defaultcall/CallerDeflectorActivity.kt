@@ -4,11 +4,14 @@ import android.Manifest
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
+import android.os.Build
 import android.os.Bundle
 import android.telecom.TelecomManager
 import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -38,15 +41,16 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import com.example.truecaller.screencallapp.CallerScreeningService
 
 
 class CallerDeflectorActivity: ComponentActivity() {
     private val TAG: String = CallerDeflectorActivity::class.java.simpleName
-    private val PHONENUMBER: Uri = Uri.fromParts("tel:", "0914143822", null)
 
     private var CALL_PERMISSION_REQUEST = 99
     private lateinit var callerManager: CallerManager
 
+    @RequiresApi(Build.VERSION_CODES.Q)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         callerManager = CallerManager(this)
@@ -54,11 +58,8 @@ class CallerDeflectorActivity: ComponentActivity() {
         val intent: Intent? = intent
         val phoneNumber = intent?.getStringExtra("uri") ?: "0914143822"
         val name = intent?.getStringExtra("name") ?: "quido"
-        Log.d(TAG, "Receiver(%s\n%s)".format(phoneNumber, name))
 
-//        callerManager.enablePhoneAccount()
-
-
+        Log.d(TAG, "Receiver(%s, %s)".format(phoneNumber, name))
 
 
         setContent {

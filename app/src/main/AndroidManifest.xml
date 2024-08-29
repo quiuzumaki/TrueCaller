@@ -7,7 +7,6 @@
         android:required="false" />
 
     <uses-permission android:name="android.permission.MANAGE_OWN_CALLS" />
-    <uses-permission android:name="android.permission.CALL_PHONE" />
     <uses-permission android:name="android.permission.READ_PHONE_STATE"/>
     <uses-permission android:name="android.permission.READ_PHONE_NUMBERS"/>
     <uses-permission android:name="android.permission.READ_CONTACTS"/>
@@ -59,14 +58,16 @@
 <!--        </activity>-->
 
         <activity
-            android:name=".defaultcall.CallerDeflectorActivity"
-            android:exported="false"
+            android:name=".dialog.DialogActivity"
+            android:exported="true"
             android:theme="@style/Theme.TrueCaller">
         </activity>
 
-<!--        <service-->
-<!--            android:name=".telecom.call.TelecomCallService"-->
-<!--            android:exported="false" />-->
+        <activity
+            android:name=".screencallapp.DialerActivity"
+            android:exported="false"
+            android:theme="@style/Theme.TrueCaller">
+        </activity>
 
         <service android:name="com.example.truecaller.defaultcall.CallerConnectionService"
             android:permission="android.permission.BIND_TELECOM_CONNECTION_SERVICE"
@@ -75,18 +76,6 @@
                 <action android:name="android.telecom.ConnectionService" />
             </intent-filter>
         </service>
-
-<!--        <activity-->
-<!--            android:name=".telecom.call.TelecomCallActivity"-->
-<!--            android:exported="true"-->
-<!--            android:launchMode="singleInstance"-->
-<!--            android:showOnLockScreen="true"-->
-<!--            android:showWhenLocked="true"-->
-<!--            android:turnScreenOn="true" />-->
-
-<!--        <receiver-->
-<!--            android:name=".telecom.call.TelecomCallBroadcast"-->
-<!--            android:exported="true" />-->
 
         <service
             android:name=".screencallapp.CallerScreeningService"

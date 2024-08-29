@@ -85,9 +85,6 @@ class CallerConnectionReceiver: BroadcastReceiver() {
 
     private fun isBlockedCalls(phone: String?) : Boolean {
         Log.d(TAG, phone!!)
-        if (phone == null) return true
         return false
     }
-
-
 }

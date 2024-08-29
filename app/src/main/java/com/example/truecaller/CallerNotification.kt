@@ -1,42 +1,31 @@
 package com.example.truecaller
 
-import android.R
+import android.Manifest
 import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.NotificationManager.IMPORTANCE_HIGH
-import android.app.Person
+import android.app.PendingIntent
 import android.content.Context
-import android.media.RingtoneManager
+import android.content.Intent
+import android.content.pm.PackageManager
+import android.graphics.BitmapFactory
 import android.os.Build
-import android.util.Log
 import androidx.annotation.RequiresApi
-import androidx.core.app.NotificationChannelCompat
+import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
-import androidx.core.app.NotificationManagerCompat
-import androidx.core.app.ServiceCompat.startForeground
-
+import com.example.truecaller.defaultcall.ContactDetail
+import com.example.truecaller.defaultcall.INFO_STATUS
+import com.example.truecaller.screencallapp.DialerActivity
 
 class CallerNotification(private val context: Context){
-
+    private val NOTIFICATION_CHANNEL_NAME = "notification_true_caller"
     companion object {
-        val INCOMING_NOTIFICATION_ID: String = "caller_notification_incoming"
-        val OUTGOING_NOTIFICATION_ID: String = "caller_notification_outgoing"
+        const val INCOMING_NOTIFICATION_ID: String = "caller_notification_incoming"
+        const val OUTGOING_NOTIFICATION_ID: String = "caller_notification_outgoing"
 
-        val INCOMING_CHANNEL_ID: Int = 1
-        val OUTGOING_CHANNEL_ID: Int = 2
-
-        @RequiresApi(Build.VERSION_CODES.O)
-        fun getNotificationID(context: Context) {
-            val notificationManager =
-                context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-            val channels = notificationManager.notificationChannels
-            channels.forEach { channel ->
-                Log.d("Channel: name", channel.name.toString())
-                Log.d("Channel: importance", channel.importance.toString())
-                Log.d("Channel: id", channel.id)
-            }
-        }
+        const val INCOMING_CHANNEL_ID: Int = 1
+        const val OUTGOING_CHANNEL_ID: Int = 2
 
         @RequiresApi(Build.VERSION_CODES.O)
         fun cancelNotification(context: Context, id: String) {
@@ -45,36 +34,59 @@ class CallerNotification(private val context: Context){
             notificationManager.deleteNotificationChannel(id)
         }
 
-    }
+        @RequiresApi(Build.VERSION_CODES.P)
+        fun showNotification(context: Context, contactDetail: ContactDetail) {
+            val notificationManager: NotificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
 
-    private val ringToneUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_RINGTONE)
-    private lateinit var notificationManager: NotificationManager
+            val intent = Intent(context, DialerActivity::class.java).apply {
+                flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+                action = Intent.ACTION_ANSWER
+            }
 
-    init {
-        this.notificationManager =
-            context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-    }
-    @RequiresApi(Build.VERSION_CODES.O)
-    private fun createNotificationChannel(channelId: String, channelNameRes: Int, importance: Int) {
-        val channel = NotificationChannel(channelId, channelNameRes.toString(), importance)
-        channel.lockscreenVisibility = NotificationCompat.VISIBILITY_PUBLIC
-        notificationManager.createNotificationChannel(channel)
-    }
+            val pendingIntent: PendingIntent = PendingIntent.getActivity(context, 0, intent, PendingIntent.FLAG_IMMUTABLE)
+            val largeIconId = when(contactDetail.infoStatus) {
+                INFO_STATUS.SPAM -> R.drawable.ic_spam
+                INFO_STATUS.UNKNOWN -> R.drawable.ic_warn
+                else -> {R.drawable.ic_phone_paused_24}
+            }
+            val notification: Notification = NotificationCompat.Builder(context, INCOMING_NOTIFICATION_ID)
+                .setSmallIcon(R.drawable.ic_launcher_foreground)
+                .setLargeIcon(BitmapFactory.decodeResource(context.resources, largeIconId))
+                .setContentTitle(contactDetail.phoneNumber)
+                .setContentText(contactDetail.infoStatus.toString())
+                .setDefaults(Notification.DEFAULT_ALL)
+                .setPriority(NotificationCompat.PRIORITY_HIGH)
+                .setStyle(NotificationCompat.BigTextStyle().bigText(contactDetail.infoStatus.toString()))
+                .setContentIntent(pendingIntent).addAction(androidx.core.R.drawable.ic_call_answer, "Add Spam number", pendingIntent)
+                .build()
 
-
-
-    @RequiresApi(Build.VERSION_CODES.P)
-    public fun showIncomingNotification() {
-
-    }
-
-    public fun showOutgoingNotification() {
-        val ongoingChannel = NotificationChannelCompat.Builder(
-            OUTGOING_NOTIFICATION_ID,
-            NotificationManagerCompat.IMPORTANCE_DEFAULT,
-        )
-            .setName("Ongoing calls")
-            .setDescription("Displays the ongoing call notifications")
-            .build()
+            // create notification channel
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                if (notificationManager.getNotificationChannel(INCOMING_NOTIFICATION_ID) == null) {
+                    val channel = NotificationChannel(
+                        INCOMING_NOTIFICATION_ID,
+                        "notification_true_caller",
+                        IMPORTANCE_HIGH
+                    )
+                    channel.description = "true_caller"
+                    notificationManager.createNotificationChannel(channel)
+                }
+            }
+            if (ActivityCompat.checkSelfPermission(
+                    context,
+                    Manifest.permission.POST_NOTIFICATIONS
+                ) != PackageManager.PERMISSION_GRANTED
+            ) {
+                // TODO: Consider calling
+                //    ActivityCompat#requestPermissions
+                // here to request the missing permissions, and then overriding
+                //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+                //                                          int[] grantResults)
+                // to handle the case where the user grants the permission. See the documentation
+                // for ActivityCompat#requestPermissions for more details.
+                return
+            }
+            notificationManager.notify(INCOMING_CHANNEL_ID, notification)
+        }
     }
 }

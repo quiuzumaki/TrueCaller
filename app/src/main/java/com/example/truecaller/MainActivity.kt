@@ -38,7 +38,7 @@ class MainActivity : ComponentActivity() {
                 MainScreen(onClick = {
                     Toast.makeText(this, "Start", Toast.LENGTH_LONG).show()
                     startActivity(
-                        Intent(this, CallerDeflectorActivity::class.java)
+                        Intent(this, DialerActivity::class.java)
                     )
                 })
 //                TelecomCallSample()
@@ -74,15 +74,6 @@ class MainActivity : ComponentActivity() {
                 startActivityForResult(intent, REDIRECT_ROLE_REQUEST_CODE)
             }
         }
-    }
-
-    fun CallActivity() {
-        val intent = Intent(Intent.ACTION_CALL)
-        intent.apply {
-            setData(Uri.parse("tel:0123456789"))
-        }
-        checkPermission(Manifest.permission.CALL_PHONE)
-        startActivity(intent)
     }
 
     fun StartDialerActivity() {
